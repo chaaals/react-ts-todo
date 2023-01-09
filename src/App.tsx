@@ -1,11 +1,14 @@
 import React, { useReducer, useRef } from "react";
+import styled from "styled-components";
 
 import AddTodoForm from "./components/add-todo/add-todo-form.component";
+import TodoItem from "./components/todo-item/todo-item.component";
 
-type Todo = {
+export type Todo = {
   todo_key: string;
   todo_name: string | undefined;
   pinned: boolean;
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 };
 
 type AddTodo = {
@@ -15,7 +18,7 @@ type AddTodo = {
 
 type DeleteTodo = {
   readonly type: "delete";
-  readonly todo_key: string;
+  readonly todo_key: string | null;
 };
 
 type PinTodo = {
@@ -29,6 +32,44 @@ type State = {
   todos: Array<Todo> | [];
 };
 
+const AppContainer = styled.main`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-direction: column;
+  gap: 1rem;
+
+  width: 100vw;
+  height: 100vh;
+`;
+
+const TodoApp = styled.section`
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 1em;
+
+  box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+  min-width: 350px;
+  background-color: #fff;
+`;
+
+const TaskContainer = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  width: 300px;
+  min-height: 75vh;
+  max-height: 75vh;
+
+  overflow: auto;
+`;
+
 function App() {
   const [state, dispatch] = useReducer<React.Reducer<State, Action>>(reducer, {
     todos: [],
@@ -40,28 +81,53 @@ function App() {
     e.preventDefault();
 
     const input = inputRef.current;
-    const payload = {
-      todo_key: generateRandomKey(),
-      todo_name: input?.value,
-      pinned: false,
-    };
+    if (!input || input?.value === undefined) return;
 
-    dispatch({ type: "add", payload });
+    dispatch({
+      type: "add",
+      payload: {
+        todo_key: generateRandomKey(),
+        todo_name: input?.value,
+        pinned: false,
+      },
+    });
+
+    input.value = "";
+  };
+
+  const handleDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+
+    const el = event.target as Element;
+    const todoItem = el.closest("#todo-item");
+
+    if (!todoItem) return;
+
+    dispatch({
+      type: "delete",
+      todo_key: todoItem.getAttribute("data-todo-key"),
+    });
   };
 
   return (
-    <div className="App">
+    <AppContainer>
       <AddTodoForm inputRef={inputRef} onSubmit={handleSubmit} />
-      <h3>My Tasks</h3>
-      <div>
-        {state.todos &&
-          state.todos.map((todo) => (
-            <p key={todo.todo_key} data-todo-key={todo.todo_key}>
-              {todo.todo_name}
-            </p>
-          ))}
-      </div>
-    </div>
+      <TodoApp>
+        <h3>My Tasks</h3>
+        <TaskContainer>
+          {state.todos &&
+            state.todos.map((todo) => (
+              <TodoItem
+                key={todo.todo_key}
+                todo_key={todo.todo_key}
+                todo_name={todo.todo_name}
+                pinned={todo.pinned}
+                onClick={handleDelete}
+              />
+            ))}
+        </TaskContainer>
+      </TodoApp>
+    </AppContainer>
   );
 }
 
