@@ -60,6 +60,7 @@ const TodoApp = styled.section`
 
 const TaskContainer = styled.section`
   display: flex;
+  align-items: center;
   flex-direction: column;
   gap: 1rem;
 
@@ -82,6 +83,11 @@ function App() {
 
     const input = inputRef.current;
     if (!input || input?.value === undefined) return;
+
+    if (!input.value) {
+      console.error("Please write something on the text field.");
+      return;
+    }
 
     dispatch({
       type: "add",
@@ -115,7 +121,7 @@ function App() {
       <TodoApp>
         <h3>My Tasks</h3>
         <TaskContainer>
-          {state.todos &&
+          {state.todos.length !== 0 ? (
             state.todos.map((todo) => (
               <TodoItem
                 key={todo.todo_key}
@@ -124,7 +130,12 @@ function App() {
                 pinned={todo.pinned}
                 onClick={handleDelete}
               />
-            ))}
+            ))
+          ) : (
+            <p>
+              <strong>Way to go! You have no tasks left.</strong>
+            </p>
+          )}
         </TaskContainer>
       </TodoApp>
     </AppContainer>
